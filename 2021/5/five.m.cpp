@@ -3,8 +3,6 @@
 #include <string>
 #include <vector>
 
-#include <fwoop_tokenizer.h>
-
 struct Point {
     unsigned int x;
     unsigned int y;
@@ -16,6 +14,7 @@ struct Line {
 
     bool isHorizontal() const;
     bool isVertical() const;
+    void print() const;
 
     void pointsOnLine(std::vector<Point> &points) const;
 };
@@ -30,23 +29,34 @@ bool Line::isVertical() const
     return start.x == end.x;
 }
 
+void Line::print() const
+{
+    std::cout << start.x << ',' << start.y << " -> " << end.x << ',' << end.y << '\n';
+}
+
 void Line::pointsOnLine(std::vector<Point> &points) const
 {
     points.push_back(start);
     Point p = start;
     if (isHorizontal()) {
         while (p.x != end.x) {
-            if (p.x !)
+            p.x += p.x < end.x ? 1 : -1;
             points.push_back(p);
         }
     }
     else if (isVertical()) {
         while (p.y != end.y) {
-            ++p.y;
+            p.y += p.y < end.y ? 1 : -1;
             points.push_back(p);
         }
     }
-    points.push_back(end);
+    else {
+        while (p.x != end.x && p.y != end.y) {
+            p.x += p.x < end.x ? 1 : -1;
+            p.y += p.y < end.y ? 1 : -1;
+            points.push_back(p);
+        }
+    }
 }
 
 int loadLines(const std::string &filename, std::vector<Line> &lines)
@@ -78,7 +88,7 @@ int loadLines(const std::string &filename, std::vector<Line> &lines)
     return 0;
 }
 
-void countOverlappingVents(const std::vector<Line> lines, unsigned int &overlaps)
+void countOverlappingVents(const std::vector<Line> lines, unsigned int &overlaps, bool useDiagonal)
 {
     overlaps = 0;
     unsigned int maxX = 0;
@@ -90,9 +100,9 @@ void countOverlappingVents(const std::vector<Line> lines, unsigned int &overlaps
         maxY = std::max(maxY, ln.end.y);
     }
 
-    std::vector<std::vector<unsigned int>> seafloor(maxX, std::vector<unsigned int>(maxY, 0));
+    std::vector<std::vector<unsigned int>> seafloor(maxX + 1, std::vector<unsigned int>(maxY + 1, 0));
     for (auto ln : lines) {
-        if (ln.isVertical() || ln.isHorizontal()) {
+        if (useDiagonal || ln.isVertical() || ln.isHorizontal()) {
             std::vector<Point> points;
             ln.pointsOnLine(points);
             for (auto p : points) {
@@ -120,8 +130,11 @@ int main(int argc, char *argv[])
     }
 
     unsigned int overlaps;
-    countOverlappingVents(lines, overlaps);
+    countOverlappingVents(lines, overlaps, false);
     std::cout << "number of overlapping vents: " << overlaps << '\n';
+
+    countOverlappingVents(lines, overlaps, true);
+    std::cout << "number of overlapping vents (with diagnals): " << overlaps << '\n';
 
     return 0;
 }
