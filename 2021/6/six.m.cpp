@@ -1,8 +1,10 @@
+#include <algorithm>
+#include <cstdint>
 #include <fstream>
 #include <iostream>
+#include <numeric>
 #include <string>
 #include <vector>
-
 
 int readLanturnFish(const std::string &filename, std::vector<unsigned int> &lanturnFish)
 {
@@ -44,21 +46,20 @@ void countFishAfter(std::vector<unsigned int> lanturnFish, unsigned int days, un
     numFish = lanturnFish.size();
 }
 
-void countFishFaster(const std::vector<unsigned int> &lanturnFish, unsigned int days, unsigned long long &numFish)
+void countFishFaster(const std::vector<unsigned int> &lanturnFish, unsigned int days, uint64_t &numFish)
 {
-    std::vector<unsigned int> startingCounts(8, 0);
-    for (auto f : lanturnFish) {
-        ++startingCounts[f];
+    constexpr int NUM_FISH_COUNTS = 9;
+    uint64_t fishCounts[NUM_FISH_COUNTS] = {0};
+    for (const auto& f : lanturnFish) {
+        ++fishCounts[f];
     }
 
     numFish = 0;
-    for (unsigned int i = 0; i < startingCounts.size(); ++i) {
-        if (startingCounts[i] > 0) {
-            unsigned int tempCount;
-            countFishAfter(std::vector<unsigned int>{i}, days, tempCount);
-            numFish += tempCount * startingCounts[i];
-        }
+    for (unsigned int d = 0; d < days; ++d) {
+        std::rotate(fishCounts, fishCounts + 1, fishCounts + NUM_FISH_COUNTS);
+        fishCounts[6] += fishCounts[8];
     }
+    numFish = std::accumulate(fishCounts, fishCounts + NUM_FISH_COUNTS, uint64_t(0));
 }
 
 int main(int argc, char *argv[])
@@ -81,7 +82,7 @@ int main(int argc, char *argv[])
     std::cout << "Number of lanturn fish after " << days << " days: " << numFish << '\n';
 
     days = 256;
-    unsigned long long numFish2;
+    uint64_t numFish2;
     countFishFaster(lanturnFish, days, numFish2);
     std::cout << "Number of lanturn fish after " << days << " days: " << numFish2 << '\n';
 
